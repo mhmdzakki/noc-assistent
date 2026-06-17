@@ -1,0 +1,54 @@
+# dependencies (bun install)
+node_modules
+# output
+out
+dist
+*.tgz
+# database
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+# code coverage
+coverage
+*.lcov
+# logs
+logs
+*.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+# IntelliJ based IDEs
+.idea
+*.iml
+*.iws
+*.ipr
+# Finder (MacOS) folder config
+.DS_Store
+# VSCode
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+# Bun
+.bun
+# Build outputs
+build/
+*.bundle.js
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+# OS specific
+Thumbs.db
+.env.*.local
+# Runtime
+.env.production

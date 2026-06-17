@@ -1,0 +1,22 @@
+{
+  "name": "noc-assistent-3",
+  "module": "app.ts",
+  "type": "module",
+  "private": true,
+  "bun": {
+    "alias": {
+      "@": "./src"
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.8.0",
+    "hono": "^4.12.25",
+    "zod": "^4.4.3"
+  }
+}
