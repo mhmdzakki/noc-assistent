@@ -64,7 +64,11 @@ export class AuthController {
                 const body: ApiResponse<null> = { success: false, error: "Unauthorized" };
                 return ctx.json(body, 401);
             }
-            this.authService.logout(cookie);
+            const result = this.authService.logout(cookie);
+            if (result.error) {
+                const body: ApiResponse<null> = { success: false, error: "Unauthorized" };
+                return ctx.json(body, 401);
+            }
             deleteCookie(ctx, "session");
             const data: ApiResponse<null> = { success: true, data: null };
             return ctx.json(data, 200);

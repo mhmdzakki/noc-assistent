@@ -1,4 +1,4 @@
-import { AuthService } from "@/auth/service";
+import { AuthService } from "@/modules/auth/service";
 import type { Context, Next } from "hono";
 import { getCookie } from "hono/cookie";
 
