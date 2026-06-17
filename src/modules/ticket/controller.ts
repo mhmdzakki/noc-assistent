@@ -2,6 +2,16 @@ import type { Context } from "hono";
 import { TicketService } from "./service";
 import type { Tickets } from "./model";
 import type { ApiResponse } from "@/types/apiResponse";
+import { success } from "zod";
+
+interface Query {
+    status?: "Open" | "Closed";
+    search?: string;
+    sort?: string;
+    order?: "asc" | "desc";
+    page?: number;
+    limit?: number;
+}
 
 export class TicketController {
     private ticketService: TicketService
@@ -9,10 +19,9 @@ export class TicketController {
         this.ticketService = new TicketService()
     }
 
-    getAll(ctx: Context) {
+    getAll(ctx: Context, query: Query) {
         try {
-            const params = ctx.req.query();
-            const result = this.ticketService.getAllTickets(params);
+            const result = this.ticketService.getAllTickets(query);
             if (result.error || !result.data) {
                 const body: ApiResponse<null> = { success: false, error: "Failed to fetch tickets" };
                 return ctx.json(body, 500);
@@ -23,8 +32,7 @@ export class TicketController {
                 return ctx.json(body, 200);
             }
 
-            const body: ApiResponse<typeof result.data> = { success: true, data: result.data };
-            return ctx.json(body, 200);
+            return ctx.json({ success: true, ...result.data }, 200);
         } catch (error) {
             console.error("Error fetching tickets:", error);
             const body: ApiResponse<null> = { success: false, error: "Internal server error" };
@@ -48,9 +56,8 @@ export class TicketController {
         }
     }
 
-    async addRootCause(ctx: Context, ticket_no: string): Promise<Response> {
+    async addRootCause(ctx: Context, ticket_no: string, root_cause: string): Promise<Response> {
         try {
-            const { root_cause } = await ctx.req.json();
             if (!root_cause) {
                 const body: ApiResponse<null> = { success: false, error: "Root cause is required" };
                 return ctx.json(body, 400);
@@ -69,9 +76,8 @@ export class TicketController {
         }
     }
 
-    async addAction(ctx: Context, ticket_no: string): Promise<Response> {
+    async addAction(ctx: Context, ticket_no: string, action: string): Promise<Response> {
         try {
-            const { action } = await ctx.req.json();
             if (!action) {
                 const body: ApiResponse<null> = { success: false, error: "Restoration action is required" };
                 return ctx.json(body, 400);
@@ -85,6 +91,26 @@ export class TicketController {
             return ctx.json(body, 200);
         } catch (error) {
             console.error("Error adding restoration action:", error);
+            const body: ApiResponse<null> = { success: false, error: "Internal server error" };
+            return ctx.json(body, 500);
+        }
+    }
+
+    async addCategory(ctx: Context, ticket_no: string, category: string): Promise<Response> {
+        try {
+            if (!category) {
+                const body: ApiResponse<null> = { success: false, error: "Category is required" };
+                return ctx.json(body, 400);
+            }
+            const result = this.ticketService.addCategory(ticket_no, category);
+            if (result.error) {
+                const body: ApiResponse<null> = { success: false, error: "Failed to add category" };
+                return ctx.json(body, 500);
+            }
+            const body: ApiResponse<null> = { success: true, data: null };
+            return ctx.json(body, 200);
+        } catch (error) {
+            console.error("Error adding category:", error);
             const body: ApiResponse<null> = { success: false, error: "Internal server error" };
             return ctx.json(body, 500);
         }

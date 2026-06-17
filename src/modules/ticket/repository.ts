@@ -13,15 +13,16 @@ export type TicketPage = {
 
 const SORTABLE_COLUMNS = new Set([
     "ticket_no", "flp", "status", "segment", "problem_desc",
-    "down_time", "up_time", "root_cause", "created_at"
+    "down_time", "up_time", "root_cause", "category", "created_at"
 ]);
 
 export class TicketRepository {
 
     private stmtGetTicket: Statement<Tickets, [string]>;
-    private stmtAddTicket: Statement<Tickets, [string, string, string, string, string, string | null, string | null, string | null]>;
+    private stmtAddTicket: Statement<Tickets, [string, string, string, string, string, string | null, string | null, string | null, string | null]>;
     private stmtAddRootCause: Statement<Tickets, [string, string]>;
     private stmtAddAction: Statement<Tickets, [string, string]>;
+    private stmtAddCategory: Statement<Tickets, [string, string]>;
     private stmtCloseTicket: Statement<Tickets, [string]>;
 
 
@@ -29,8 +30,8 @@ export class TicketRepository {
         this.stmtGetTicket = db.prepare<Tickets, [string]>(
             `SELECT * FROM tickets WHERE ticket_no = ?`
         );
-        this.stmtAddTicket = db.prepare<Tickets, [string, string, string, string, string, string | null, string | null, string | null]>(
-            `INSERT INTO tickets (ticket_no, flp, status, segment, problem_desc, down_time, up_time, root_cause) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(ticket_no) DO NOTHING`
+        this.stmtAddTicket = db.prepare<Tickets, [string, string, string, string, string, string | null, string | null, string | null, string | null]>(
+            `INSERT INTO tickets (ticket_no, flp, status, segment, problem_desc, down_time, up_time, root_cause, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(ticket_no) DO NOTHING`
         );
         this.stmtAddRootCause = db.prepare<Tickets, [string, string]>(
             `UPDATE tickets SET root_cause = ? WHERE ticket_no = ?`
@@ -38,8 +39,11 @@ export class TicketRepository {
         this.stmtAddAction = db.prepare<Tickets, [string, string]>(
             `UPDATE tickets SET restoration_action = ? WHERE ticket_no = ?`
         );
+        this.stmtAddCategory = db.prepare<Tickets, [string, string]>(
+            `UPDATE tickets SET category = ? WHERE ticket_no = ?`
+        );
         this.stmtCloseTicket = db.prepare<Tickets, [string]>(
-            `UPDATE tickets SET status = 'Closed' WHERE ticket_no = ?`
+            `UPDATE tickets SET status = 'Closed' WHERE ticket_no = ? AND status != 'Closed'`
         );
     }
 
@@ -50,7 +54,7 @@ export class TicketRepository {
         order?: "asc" | "desc";
         page?: number;
         limit?: number;
-    }): Result<TicketPage> {
+    }): TicketPage | null {
         try {
             let page = Math.max(1, params.page ?? 1);
             let limit = Math.max(1, params.limit ?? 20);
@@ -66,9 +70,9 @@ export class TicketRepository {
             }
 
             if (params.search) {
-                where += " AND (ticket_no LIKE ? OR problem_desc LIKE ? OR segment LIKE ? OR flp LIKE ?)";
+                where += " AND (ticket_no LIKE ? OR pic LIKE ? OR segment LIKE ?  LIKE ? OR category LIKE ?)";
                 const like = `%${params.search}%`;
-                args.push(like, like, like, like);
+                args.push(like, like, like, like, like);
             }
 
             // Count total
@@ -93,17 +97,16 @@ export class TicketRepository {
             const totalPages = Math.ceil(total / limit);
 
             return {
-                data: {
-                    data: tickets,
-                    total,
-                    page,
-                    limit,
-                    totalPages,
-                }
+
+                data: tickets,
+                total,
+                page,
+                limit,
+                totalPages,
             };
         } catch (error) {
             console.error("Error fetching all tickets:", error);
-            return { error: true };
+            return null;
         }
     }
 
@@ -140,6 +143,17 @@ export class TicketRepository {
         }
     }
 
+    addCategory(ticket_no: string, category: string): Result<null> {
+        try {
+            const data = this.stmtAddCategory.run(category, ticket_no);
+            if (data.changes === 0) { return { error: true }; }
+            return { data: null };
+        } catch (error) {
+            console.error("Error adding category:", error);
+            return { error: true };
+        }
+    }
+
     closeTicket(ticket_no: string): Result<null> {
         try {
             const data = this.stmtCloseTicket.run(ticket_no);
@@ -153,9 +167,9 @@ export class TicketRepository {
 
     addTicket(ticket: Tickets): Result<null> {
         try {
-            const { ticket_no, flp, status, segment, problem_desc, down_time, up_time, root_cause } = ticket;
+            const { ticket_no, flp, status, segment, problem_desc, down_time, up_time, root_cause, category } = ticket;
 
-            const data = this.stmtAddTicket.run(ticket_no, flp, status, segment, problem_desc, down_time!, up_time!, root_cause!);
+            const data = this.stmtAddTicket.run(ticket_no, flp, status, segment, problem_desc, down_time!, up_time!, root_cause!, category!);
             if (data.changes === 0) { return { error: true }; }
             return { data: null };
         } catch (error) {

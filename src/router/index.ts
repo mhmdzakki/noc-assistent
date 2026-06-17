@@ -1,5 +1,5 @@
 import { authRouter } from "@/auth/router";
-import { ticketRouter } from "@/ticket/router";
+import { ticketRouter } from "@/modules/ticket/router";
 import { Hono } from "hono";
 
 export const router = new Hono();

@@ -22,10 +22,10 @@ export class TicketService {
         // Logic to get all tickets with pagination, sorting, and filtering
         try {
             const data = this.ticketRepo.getAll(params);
-            if (data.error || !data.data) {
+            if (!data) {
                 return { error: true };
             }
-            return { data: data.data };
+            return { data: data };
         } catch (error) {
             console.error("Error fetching tickets:", error);
             return { error: true };
@@ -68,6 +68,19 @@ export class TicketService {
             return { data: null };
         } catch (error) {
             console.error("Error adding restoration action:", error);
+            return { error: true };
+        }
+    }
+
+    addCategory(ticket_no: string, category: string): Result<null> {
+        try {
+            const data = this.ticketRepo.addCategory(ticket_no, category);
+            if (data.error) {
+                return { error: true };
+            }
+            return { data: null };
+        } catch (error) {
+            console.error("Error adding category:", error);
             return { error: true };
         }
     }
